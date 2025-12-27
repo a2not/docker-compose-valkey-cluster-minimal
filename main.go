@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/valkey-io/valkey-go"
@@ -14,17 +15,18 @@ import (
 func main() {
 	ctx := context.Background()
 
-	valkeyAddr := os.Getenv("VALKEY_ADDR")
+	valkeyAddrs := os.Getenv("VALKEY_ADDRS")
+	addrs := strings.Split(valkeyAddrs, ",")
 
 	client, err := valkey.NewClient(valkey.ClientOption{
 		Username:    "default",
 		ClientName:  "app",
-		InitAddress: []string{valkeyAddr},
+		InitAddress: addrs,
 	})
 	if err != nil {
 		slog.Error(
 			"Creating Valkey client failed",
-			slog.Any("valkeyAddr", valkeyAddr),
+			slog.Any("valkeyAddr", valkeyAddrs),
 			slog.Any("error", err))
 		return
 	}

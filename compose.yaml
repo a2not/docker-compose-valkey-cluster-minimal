@@ -1,16 +1,30 @@
 services:
   valkey:
-    image: valkey/valkey:latest
+    image: valkey/valkey:8.0-alpine
     container_name: valkey
     ports:
       - "6379:6379"
-    volumes:
-      - valkey-data:/data
     healthcheck:
       test: ["CMD", "valkey-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10
+
+  valkey-cluster:
+    image: valkey/valkey:8.0-alpine
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        valkey-server --port 7001 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7001.conf &
+        valkey-server --port 7002 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7002.conf &
+        valkey-server --port 7003 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7003.conf &
+        while ! valkey-cli --cluster create 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 --cluster-yes; do sleep 1; done
+        wait
+    ports:
+      - "7001:7001"
+      - "7002:7002"
+      - "7003:7003"
 
   app:
     build: .
@@ -18,7 +32,5 @@ services:
       valkey:
         condition: service_healthy
     environment:
-      - VALKEY_ADDR=valkey:6379
-
-volumes:
-  valkey-data:
+      # VALKEY_ADDRS: "valkey-cluster:7001,valkey-cluster:7002,valkey-cluster:7003" # NOTE: somehow try to connect to 127.0.0.1:7001
+      VALKEY_ADDRS: "valkey:6379" # NOTE: succeeds
