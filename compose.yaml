@@ -38,21 +38,23 @@ services:
 
   app-single:
     build: .
+    network_mode: service:valkey-single
     depends_on:
       valkey-single:
         condition: service_healthy
     environment:
-      VALKEY_ADDRS: "valkey-single:6379" # NOTE: succeeds
+      VALKEY_ADDRS: "localhost:6379" # NOTE: succeeds
     profiles:
       - valkey-single
 
   app-cluster:
     build: .
+    network_mode: service:valkey-cluster
     depends_on:
       valkey-cluster:
         condition: service_healthy
     environment:
-      VALKEY_ADDRS: "valkey-cluster:7001,valkey-cluster:7002,valkey-cluster:7003" # NOTE: somehow try to connect to 127.0.0.1:7001
+      VALKEY_ADDRS: "localhost:7001,localhost:7002,localhost:7003" # NOTE: somehow try to connect to 127.0.0.1:7001
     profiles:
       - valkey-cluster
 
