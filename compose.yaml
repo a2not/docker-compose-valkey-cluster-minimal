@@ -5,11 +5,16 @@ services:
       - /bin/sh
       - -c
       - |
-        IP=$$(hostname -i)
-        valkey-server --port 7001 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7001.conf --cluster-announce-ip $$IP &
-        valkey-server --port 7002 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7002.conf --cluster-announce-ip $$IP &
-        valkey-server --port 7003 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7003.conf --cluster-announce-ip $$IP &
-        while ! valkey-cli --cluster create $$IP:7001 $$IP:7002 $$IP:7003 --cluster-yes; do sleep 1; done
+        valkey-server --port 7001 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7001.conf --cluster-announce-hostname valkey-cluster &
+        valkey-server --port 7002 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7002.conf --cluster-announce-hostname valkey-cluster &
+        valkey-server --port 7003 --save "" --appendonly no --cluster-enabled yes --cluster-config-file 7003.conf --cluster-announce-hostname valkey-cluster &
+
+        # Check if cluster is already formed (cluster_state:ok means persisted config loaded successfully)
+        while [ -z "$(valkey-cli -h valkey-cluster -p 7001 CLUSTER INFO 2>/dev/null | grep 'cluster_state:ok')" ]; do
+          # Create cluster only if not already clustered
+          valkey-cli --cluster create valkey-cluster:7001 valkey-cluster:7002 valkey-cluster:7003 --cluster-yes
+          sleep 1
+        done
         wait
     ports:
       - 7001-7003:7001-7003
