@@ -10,7 +10,7 @@ services:
         valkey-server --port 7003 --cluster-enabled yes --cluster-config-file 7003.conf --cluster-announce-hostname valkey-cluster &
 
         # Check if cluster is already formed (cluster_state:ok means persisted config loaded successfully)
-        while [ -z "$(valkey-cli -h valkey-cluster -p 7001 CLUSTER INFO 2>/dev/null | grep 'cluster_state:ok')" ]; do
+        while ! valkey-cli -h valkey-cluster -p 7001 CLUSTER INFO 2>/dev/null | grep -q "cluster_state:ok"; do
           # Create cluster only if not already clustered
           valkey-cli --cluster create valkey-cluster:7001 valkey-cluster:7002 valkey-cluster:7003 --cluster-yes
           sleep 1
