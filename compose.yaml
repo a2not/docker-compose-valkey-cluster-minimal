@@ -5,16 +5,14 @@ services:
       - /bin/sh
       - -c
       - |
-        set -eoux
         for port in 7001 7002 7003; do
-          echo "porting node on port ${port}"
-          mkdir -p /data/node_${port}
+          mkdir -p /data/node_$${port}
           valkey-server \
-            --port ${port} \
+            --port $${port} \
             --cluster-enabled yes \
             --save "10 1" \
-            --dir /data/node_${port} \
-            --cluster-config-file ${port}.conf \
+            --dir /data/node_$${port} \
+            --cluster-config-file $${port}.conf \
             --cluster-announce-hostname valkey-cluster \
             --cluster-preferred-endpoint-type hostname &
         done
